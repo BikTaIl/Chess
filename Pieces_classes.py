@@ -5,7 +5,6 @@ import sys
 pygame.init()
 
 
-
 def coords_to_pixels(coords):
     if 0 <= coords[0] <= 8 and 0 <= coords[1] <= 8:
         x = (coords[0] - 1) * 95
@@ -44,14 +43,17 @@ class Pawn(Piece):
         super(Pawn, self).__init__(coords, colour, *group)
         self.first_move = True
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
                 good_cells[(x, y)] = False
         if self.colour == 'w':
-            if not board[(self.coords[0], self.coords[1] - 1)]:
-                good_cells[(self.coords[0], self.coords[1] - 1)] = True
+            try:
+                if not board[(self.coords[0], self.coords[1] - 1)]:
+                    good_cells[(self.coords[0], self.coords[1] - 1)] = True
+            except KeyError:
+                pass
             try:
                 if board[(self.coords[0] + 1, self.coords[1] - 1)] == 'b':
                     good_cells[(self.coords[0] + 1, self.coords[1] - 1)] = True
@@ -95,7 +97,7 @@ class Bishop(Piece):
         self.image = load_image(f'{colour}B')
         super(Bishop, self).__init__(coords, colour, *group)
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
@@ -133,7 +135,7 @@ class Knight(Piece):
         self.image = load_image(f'{colour}N')
         super(Knight, self).__init__(coords, colour, *group)
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
@@ -149,9 +151,10 @@ class Knight(Piece):
 class Rook(Piece):
     def __init__(self, coords, colour, *group):
         self.image = load_image(f'{colour}R')
+        self.first_move = True
         super(Rook, self).__init__(coords, colour, *group)
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
@@ -187,7 +190,7 @@ class Queen(Piece):
         self.image = load_image(f'{colour}Q')
         super(Queen, self).__init__(coords, colour, *group)
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         rook_good_cells = {}
         bishop_good_cells = {}
@@ -258,9 +261,12 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, coords, colour, *group):
         self.image = load_image(f'{colour}K')
+        self.first_move = True
+        self.is_checked = False
+        self.castling_rook = {}
         super(King, self).__init__(coords, colour, *group)
 
-    def can_move(self, board):
+    def can_move(self, board, all_sprites):
         good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
@@ -269,6 +275,41 @@ class King(Piece):
                         good_cells[(x, y)] = True
                     else:
                         good_cells[(x, y)] = False
+                    if self.first_move and not self.is_checked:
+                        if self.colour == 'w':
+                            if not (board[(6, 8)] or board[(7, 8)]):
+                                for piece in all_sprites:
+                                    try:
+                                        if piece.coords == (8, 8) and piece.first_move:
+                                            good_cells[(7, 8)] = True
+                                            self.castling_rook[(7, 8)] = ((8, 8), (6, 8))
+                                    except AttributeError:
+                                        pass
+                            if not (board[(4, 8)] or board[(3, 8)] or board[(2, 8)]):
+                                for piece in all_sprites:
+                                    try:
+                                        if piece.coords == (1, 8) and piece.first_move:
+                                            good_cells[(3, 8)] = True
+                                            self.castling_rook[(3, 8)] = ((1, 8), (4, 8))
+                                    except AttributeError:
+                                        pass
+                        if self.colour == 'b':
+                            if not (board[(6, 1)] or board[(7, 1)]):
+                                for piece in all_sprites:
+                                    try:
+                                        if piece.coords == (8, 1) and piece.first_move:
+                                            good_cells[(7, 1)] = True
+                                            self.castling_rook[(7, 1)] = ((8, 1), (6, 1))
+                                    except AttributeError:
+                                        pass
+                            if not (board[(4, 1)] or board[(3, 1)] or board[(2, 1)]):
+                                for piece in all_sprites:
+                                    try:
+                                        if piece.coords == (1, 1) and piece.first_move:
+                                            good_cells[(3, 1)] = True
+                                            self.castling_rook[(3, 1)] = ((1, 1), (4, 1))
+                                    except AttributeError:
+                                        pass
                 except KeyError:
                     pass
         return good_cells

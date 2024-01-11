@@ -72,12 +72,12 @@ while running:
             for piece in all_sprites:
                 if piece.coords == (x, y):
                     last_piece = piece
-                    for cell in piece.can_move(board).keys():
-                        if piece.can_move(board)[cell] and not board[cell]:
+                    for cell in piece.can_move(board, all_sprites).keys():
+                        if piece.can_move(board, all_sprites)[cell] and not board[cell]:
                             wanna_move.append(cell)
                             pygame.draw.ellipse(screen, pygame.Color('#073826'), (
                                 coords_to_pixels(cell)[0] + 30, coords_to_pixels(cell)[1] + 30, 35, 35))
-                        elif piece.can_move(board)[cell] and piece.colour != board[cell]:
+                        elif piece.can_move(board, all_sprites)[cell] and piece.colour != board[cell]:
                             wanna_move.append(cell)
                             pygame.draw.rect(screen, pygame.Color('#073826'), (coords_to_pixels(cell), (95, 95)), 5)
         if (x, y) in wanna_move_dublicate:
@@ -88,6 +88,13 @@ while running:
             last_piece.coords = (x, y)
             try:
                 last_piece.first_move = False
+            except AttributeError:
+                pass
+            try:
+                for piece in all_sprites:
+                    if piece.coords == last_piece.castling_rook[(x, y)][0]:
+                        piece.coords = last_piece.castling_rook[(x, y)][1]
+                        piece.first_move = False
             except AttributeError:
                 pass
             if moving_colour == 'w':
