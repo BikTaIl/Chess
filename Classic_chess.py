@@ -2,6 +2,8 @@ import pygame
 from Pieces_classes import *
 
 pygame.init()
+pawn_moved_two_squares = False
+last_moved_piece = ''
 height, quantity = 760, 8
 width = height
 screen = pygame.display.set_mode((width, height))
@@ -70,14 +72,24 @@ while running:
             surf.set_alpha(180)
             screen.blit(surf, (coords_to_pixels((x, y))))
             for piece in all_sprites:
+                can_move = piece.can_move(board, all_sprites)
                 if piece.coords == (x, y):
                     last_piece = piece
-                    for cell in piece.can_move(board, all_sprites).keys():
-                        if piece.can_move(board, all_sprites)[cell] and not board[cell]:
+                    if type(piece) is Pawn and type(last_moved_piece) is Pawn and pawn_moved_two_squares:
+                        if moving_colour == 'w':
+                            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
+                                    last_moved_piece.coords[1]:
+                                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] - 1] = True
+                        else:
+                            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
+                                    last_moved_piece.coords[1]:
+                                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] + 1] = True
+                    for cell in can_move.keys():
+                        if can_move[cell] and not board[cell]:
                             wanna_move.append(cell)
                             pygame.draw.ellipse(screen, pygame.Color('#073826'), (
                                 coords_to_pixels(cell)[0] + 30, coords_to_pixels(cell)[1] + 30, 35, 35))
-                        elif piece.can_move(board, all_sprites)[cell] and piece.colour != board[cell]:
+                        elif can_move[cell] and piece.colour != board[cell]:
                             wanna_move.append(cell)
                             pygame.draw.rect(screen, pygame.Color('#073826'), (coords_to_pixels(cell), (95, 95)), 5)
         if (x, y) in wanna_move_dublicate:
@@ -85,16 +97,25 @@ while running:
                 for piece in all_sprites:
                     if piece.coords == (x, y):
                         all_sprites.remove(piece)
+            if type(last_piece) is Pawn and abs(x - last_piece.coords[0]) == 1 and not board[(x, y)]:
+                all_sprites.remove(last_moved_piece)
+            if type(last_piece) is Pawn and abs(last_piece.coords[1] - y) == 2:
+                pawn_moved_two_squares = True
             last_piece.coords = (x, y)
+            last_moved_piece = last_piece
             try:
                 last_piece.first_move = False
             except AttributeError:
                 pass
             try:
                 for piece in all_sprites:
-                    if piece.coords == last_piece.castling_rook[(x, y)][0]:
-                        piece.coords = last_piece.castling_rook[(x, y)][1]
-                        piece.first_move = False
+                    try:
+                        if piece.coords == last_piece.castling_rook[(x, y)][0]:
+                            piece.coords = last_piece.castling_rook[(x, y)][1]
+                            last_piece.castling_rook.clear()
+                            piece.first_move = False
+                    except KeyError:
+                        pass
             except AttributeError:
                 pass
             if moving_colour == 'w':
