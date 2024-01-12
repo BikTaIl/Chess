@@ -38,9 +38,9 @@ for colour in ('w', 'b'):
             Rook((1, 1), colour, all_sprites)
             Rook((8, 1), colour, all_sprites)
         if piece == 'K' and colour == 'w':
-            King((5, 8), colour, all_sprites)
+            white_king = King((5, 8), colour, all_sprites)
         if piece == 'K' and colour == 'b':
-            King((5, 1), colour, all_sprites)
+            black_king = King((5, 1), colour, all_sprites)
         if piece == 'Q' and colour == 'w':
             Queen((4, 8), colour, all_sprites)
         if piece == 'Q' and colour == 'b':
@@ -72,9 +72,9 @@ while running:
             surf.set_alpha(180)
             screen.blit(surf, (coords_to_pixels((x, y))))
             for piece in all_sprites:
-                can_move = piece.can_move(board, all_sprites)
                 if piece.coords == (x, y):
                     last_piece = piece
+                    can_move = piece.can_move(board, all_sprites)
                     if type(piece) is Pawn and type(last_moved_piece) is Pawn and pawn_moved_two_squares:
                         if moving_colour == 'w':
                             if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
@@ -84,6 +84,19 @@ while running:
                             if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
                                     last_moved_piece.coords[1]:
                                 can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] + 1] = True
+                    for cell in can_move.keys():
+                        piece.coords = cell
+                        board[(x, y)] = False
+                        save_board = board[cell]
+                        board[cell] = moving_colour
+                        for check in all_sprites:
+                            if check.colour != moving_colour:
+                                if (check.can_move(board, all_sprites)[white_king.coords] and moving_colour == 'w') or (
+                                        check.can_move(board, all_sprites)[black_king.coords] and moving_colour == 'b'):
+                                    can_move[cell] = False
+                        board[(x, y)] = moving_colour
+                        board[cell] = save_board
+                        piece.coords = (x, y)
                     for cell in can_move.keys():
                         if can_move[cell] and not board[cell]:
                             wanna_move.append(cell)
