@@ -90,7 +90,7 @@ while running:
                         save_board = board[cell]
                         board[cell] = moving_colour
                         for check in all_sprites:
-                            if check.colour != moving_colour:
+                            if check.colour != moving_colour and check.coords != cell:
                                 if (check.can_move(board, all_sprites)[white_king.coords] and moving_colour == 'w') or (
                                         check.can_move(board, all_sprites)[black_king.coords] and moving_colour == 'b'):
                                     can_move[cell] = False
@@ -112,7 +112,7 @@ while running:
                                     can_move[(7, 1)] = False
                                 if can_move[(3, 1)] and not can_move[(4, 1)]:
                                     can_move[(3, 1)] = False
-                                if check.can_mpve(board, all_sprites)[black_king.coords] \
+                                if check.can_move(board, all_sprites)[black_king.coords] \
                                         and check.colour != moving_colour:
                                     can_move[(7, 1)], can_move[(3, 1)] = False, False
                     for cell in can_move.keys():
@@ -156,6 +156,77 @@ while running:
             else:
                 moving_colour = 'w'
             wanna_move_dublicate.clear()
+            if type(last_piece) is Pawn and last_piece.coords[1] in (1, 8):
+                all_sprites.remove(last_piece)
+                if last_piece.colour == 'w':
+                    choosing_piece = True
+                    help_queen = Queen(last_piece.coords, 'w', all_sprites)
+                    help_knight = Knight((last_piece.coords[0], last_piece.coords[1] + 1), 'w', all_sprites)
+                    help_rook = Rook((last_piece.coords[0], last_piece.coords[1] + 2), 'w', all_sprites)
+                    help_bishop = Bishop((last_piece.coords[0], last_piece.coords[1] + 3), 'w', all_sprites)
+                    while choosing_piece:
+                        all_sprites.draw(screen)
+                        surf = pygame.Surface((95, 380))
+                        surf.fill(pygame.Color('#10263708'))
+                        surf.set_alpha(100)
+                        screen.blit(surf, (coords_to_pixels(last_piece.coords)))
+                        pygame.display.flip()
+                        for event in pygame.event.get():
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                if pygame.mouse.get_pressed()[0]:
+                                    x, y = cell_coords(pygame.mouse.get_pos())
+                                    if x == last_piece.coords[0] and y in range(1, 5):
+                                        choosing_piece = False
+                                        if y == 1:
+                                            Queen(last_piece.coords, 'w', all_sprites)
+                                        if y == 2:
+                                            Knight(last_piece.coords, 'w', all_sprites)
+                                        if y == 3:
+                                            Rook(last_piece.coords, 'w', all_sprites)
+                                        if y == 4:
+                                            Bishop(last_piece.coords, 'w', all_sprites)
+                            if event.type == pygame.QUIT:
+                                running = False
+                                choosing_piece = False
+                if last_piece.colour == 'b':
+                    choosing_piece = True
+                    help_queen = Queen(last_piece.coords, 'b', all_sprites)
+                    help_knight = Knight((last_piece.coords[0], last_piece.coords[1] - 1), 'b', all_sprites)
+                    help_rook = Rook((last_piece.coords[0], last_piece.coords[1] - 2), 'b', all_sprites)
+                    help_bishop = Bishop((last_piece.coords[0], last_piece.coords[1] - 3), 'b', all_sprites)
+                    while choosing_piece:
+                        all_sprites.draw(screen)
+                        surf = pygame.Surface((95, 380))
+                        surf.fill(pygame.Color('#10263708'))
+                        surf.set_alpha(100)
+                        screen.blit(surf, ((coords_to_pixels(last_piece.coords)[0],
+                                           coords_to_pixels(last_piece.coords)[1] - 285), (95, 380)))
+                        pygame.display.flip()
+                        for event in pygame.event.get():
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                if pygame.mouse.get_pressed()[0]:
+                                    x, y = cell_coords(pygame.mouse.get_pos())
+                                    if x == last_piece.coords[0] and y in range(8, 4, -1):
+                                        choosing_piece = False
+                                        if y == 8:
+                                            Queen(last_piece.coords, 'b', all_sprites)
+                                        if y == 7:
+                                            Knight(last_piece.coords, 'b', all_sprites)
+                                        if y == 6:
+                                            Rook(last_piece.coords, 'b', all_sprites)
+                                        if y == 5:
+                                            Bishop(last_piece.coords, 'b', all_sprites)
+                            if event.type == pygame.QUIT:
+                                running = False
+                                choosing_piece = False
+                all_sprites.remove(help_bishop)
+                all_sprites.remove(help_knight)
+                all_sprites.remove(help_rook)
+                all_sprites.remove(help_queen)
+                all_sprites.remove(last_piece)
+                all_sprites.update()
+                all_sprites.draw(screen)
+                pygame.display.flip()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
