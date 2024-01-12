@@ -97,6 +97,24 @@ while running:
                         board[(x, y)] = moving_colour
                         board[cell] = save_board
                         piece.coords = (x, y)
+                    if type(piece) is King:
+                        for check in all_sprites:
+                            if moving_colour == 'w':
+                                if can_move[(7, 8)] and not can_move[(6, 8)]:
+                                    can_move[(7, 8)] = False
+                                if can_move[(3, 8)] and not can_move[(4, 8)]:
+                                    can_move[(3, 8)] = False
+                                if check.can_move(board, all_sprites)[white_king.coords] \
+                                        and check.colour != moving_colour:
+                                    can_move[(7, 8)], can_move[(3, 8)] = False, False
+                            if moving_colour == 'b':
+                                if can_move[(7, 1)] and not can_move[(6, 1)]:
+                                    can_move[(7, 1)] = False
+                                if can_move[(3, 1)] and not can_move[(4, 1)]:
+                                    can_move[(3, 1)] = False
+                                if check.can_mpve(board, all_sprites)[black_king.coords] \
+                                        and check.colour != moving_colour:
+                                    can_move[(7, 1)], can_move[(3, 1)] = False, False
                     for cell in can_move.keys():
                         if can_move[cell] and not board[cell]:
                             wanna_move.append(cell)
