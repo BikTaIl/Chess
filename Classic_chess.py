@@ -101,6 +101,8 @@ while running:
                 all_sprites.remove(last_moved_piece)
             if type(last_piece) is Pawn and abs(last_piece.coords[1] - y) == 2:
                 pawn_moved_two_squares = True
+            else:
+                pawn_moved_two_squares = False
             last_piece.coords = (x, y)
             last_moved_piece = last_piece
             try:
