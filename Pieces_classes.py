@@ -192,8 +192,6 @@ class Queen(Piece):
 
     def can_move(self, board, all_sprites):
         good_cells = {}
-        rook_good_cells = {}
-        bishop_good_cells = {}
         for x in range(1, 9):
             for y in range(1, 9):
                 if x != self.coords[0] and y != self.coords[1] or (x == self.coords[0] and y == self.coords[1]):

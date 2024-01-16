@@ -1,8 +1,58 @@
 import pygame
 from Pieces_classes import *
 
+
+def move_checker(piece):
+    can_move = piece.can_move(board, all_sprites)
+    x, y = piece.coords
+    if type(piece) is Pawn and type(last_moved_piece) is Pawn and pawn_moved_two_squares:
+        if moving_colour == 'w':
+            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
+                    last_moved_piece.coords[1]:
+                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] - 1] = True
+        else:
+            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
+                    last_moved_piece.coords[1]:
+                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] + 1] = True
+    for cell in filter(lambda x: can_move[x], can_move.keys()):
+        piece.coords = cell
+        board[(x, y)] = False
+        save_board = board[cell]
+        board[cell] = moving_colour
+        for check in all_sprites:
+            if check.colour != moving_colour and check.coords != cell:
+                if (check.can_move(board, all_sprites)[white_king.coords] and moving_colour == 'w') or (
+                        check.can_move(board, all_sprites)[black_king.coords] and moving_colour == 'b'):
+                    can_move[cell] = False
+        board[(x, y)] = moving_colour
+        board[cell] = save_board
+        piece.coords = (x, y)
+        if board[cell] == piece.colour:
+            can_move[cell] = False
+    if type(piece) is King and piece.first_move:
+        for check in all_sprites:
+            if moving_colour == 'w':
+                if can_move[(7, 8)] and not can_move[(6, 8)]:
+                    can_move[(7, 8)] = False
+                if can_move[(3, 8)] and not can_move[(4, 8)]:
+                    can_move[(3, 8)] = False
+                if check.can_move(board, all_sprites)[white_king.coords] \
+                        and check.colour != moving_colour:
+                    can_move[(7, 8)], can_move[(3, 8)] = False, False
+            if moving_colour == 'b':
+                if can_move[(7, 1)] and not can_move[(6, 1)]:
+                    can_move[(7, 1)] = False
+                if can_move[(3, 1)] and not can_move[(4, 1)]:
+                    can_move[(3, 1)] = False
+                if check.can_move(board, all_sprites)[black_king.coords] \
+                        and check.colour != moving_colour:
+                    can_move[(7, 1)], can_move[(3, 1)] = False, False
+    return can_move
+
+
 pygame.init()
 pawn_moved_two_squares = False
+end_of_game = False
 last_moved_piece = ''
 height, quantity = 760, 8
 width = height
@@ -58,6 +108,7 @@ wanna_move_dublicate = []
 last_piece = ''
 moving_colour = 'w'
 while running:
+    king_is_checked = False
     screen.fill(pygame.Color('#B58863'))
     for i in range(0, quantity):
         n = i % 2
@@ -74,47 +125,7 @@ while running:
             for piece in all_sprites:
                 if piece.coords == (x, y):
                     last_piece = piece
-                    can_move = piece.can_move(board, all_sprites)
-                    if type(piece) is Pawn and type(last_moved_piece) is Pawn and pawn_moved_two_squares:
-                        if moving_colour == 'w':
-                            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
-                                    last_moved_piece.coords[1]:
-                                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] - 1] = True
-                        else:
-                            if abs(piece.coords[0] - last_moved_piece.coords[0]) == 1 and piece.coords[1] == \
-                                    last_moved_piece.coords[1]:
-                                can_move[last_moved_piece.coords[0], last_moved_piece.coords[1] + 1] = True
-                    for cell in can_move.keys():
-                        piece.coords = cell
-                        board[(x, y)] = False
-                        save_board = board[cell]
-                        board[cell] = moving_colour
-                        for check in all_sprites:
-                            if check.colour != moving_colour and check.coords != cell:
-                                if (check.can_move(board, all_sprites)[white_king.coords] and moving_colour == 'w') or (
-                                        check.can_move(board, all_sprites)[black_king.coords] and moving_colour == 'b'):
-                                    can_move[cell] = False
-                        board[(x, y)] = moving_colour
-                        board[cell] = save_board
-                        piece.coords = (x, y)
-                    if type(piece) is King:
-                        for check in all_sprites:
-                            if moving_colour == 'w':
-                                if can_move[(7, 8)] and not can_move[(6, 8)]:
-                                    can_move[(7, 8)] = False
-                                if can_move[(3, 8)] and not can_move[(4, 8)]:
-                                    can_move[(3, 8)] = False
-                                if check.can_move(board, all_sprites)[white_king.coords] \
-                                        and check.colour != moving_colour:
-                                    can_move[(7, 8)], can_move[(3, 8)] = False, False
-                            if moving_colour == 'b':
-                                if can_move[(7, 1)] and not can_move[(6, 1)]:
-                                    can_move[(7, 1)] = False
-                                if can_move[(3, 1)] and not can_move[(4, 1)]:
-                                    can_move[(3, 1)] = False
-                                if check.can_move(board, all_sprites)[black_king.coords] \
-                                        and check.colour != moving_colour:
-                                    can_move[(7, 1)], can_move[(3, 1)] = False, False
+                    can_move = move_checker(piece)
                     for cell in can_move.keys():
                         if can_move[cell] and not board[cell]:
                             wanna_move.append(cell)
@@ -227,6 +238,40 @@ while running:
                 all_sprites.update()
                 all_sprites.draw(screen)
                 pygame.display.flip()
+            for key in board.keys():
+                board[key] = False
+            for piece in all_sprites:
+                board[piece.coords] = piece.colour
+            end_of_game_checking = set()
+            for piece in filter(lambda x: x.colour == moving_colour, all_sprites):
+                new_can_move = move_checker(piece)
+                end_of_game_checking.add(any(new_can_move.values()))
+                if any(new_can_move.values()):
+                    break
+            end_of_game = not any(end_of_game_checking)
+            if end_of_game:
+                font = pygame.font.SysFont(None, 90)
+                for piece in filter(lambda x: x.colour != moving_colour, all_sprites):
+                    new_can_move = move_checker(piece)
+                    if moving_colour == 'w':
+                        king_is_checked = king_is_checked or new_can_move[white_king.coords]
+                    if moving_colour == 'b':
+                        king_is_checked = king_is_checked or new_can_move[black_king.coords]
+                while running:
+                    pygame.display.flip()
+                    if king_is_checked:
+                        img = font.render('Checkmate', True, (0, 0, 0))
+                    else:
+                        img = font.render('Stalemate', True, (0, 0, 0))
+                    pygame.draw.rect(screen, (255, 255, 255), (190, 285, 380, 190))
+                    screen.blit(img, (205, 355))
+                    pygame.display.flip()
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+    all_sprites.update()
+    all_sprites.draw(screen)
+    pygame.display.flip()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -236,12 +281,4 @@ while running:
                 x, y = cell_coords(pygame.mouse.get_pos())
                 wanna_move_dublicate = wanna_move.copy()
                 wanna_move.clear()
-    for key in board.keys():
-        board[key] = False
-    for piece in all_sprites:
-        board[piece.coords] = piece.colour
-    all_sprites.update()
-    all_sprites.draw(screen)
-    pygame.display.flip()
-    pass
 pygame.quit()
