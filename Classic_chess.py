@@ -53,6 +53,7 @@ def move_checker(piece):
 pygame.init()
 pawn_moved_two_squares = False
 end_of_game = False
+draw = False
 last_moved_piece = ''
 height, quantity = 760, 8
 width = height
@@ -211,7 +212,7 @@ while running:
                         surf.fill(pygame.Color('#10263708'))
                         surf.set_alpha(100)
                         screen.blit(surf, ((coords_to_pixels(last_piece.coords)[0],
-                                           coords_to_pixels(last_piece.coords)[1] - 285), (95, 380)))
+                                            coords_to_pixels(last_piece.coords)[1] - 285), (95, 380)))
                         pygame.display.flip()
                         for event in pygame.event.get():
                             if event.type == pygame.MOUSEBUTTONDOWN:
@@ -263,6 +264,9 @@ while running:
                         img = font.render('Checkmate', True, (0, 0, 0))
                     else:
                         img = font.render('Stalemate', True, (0, 0, 0))
+                    all_sprites.update()
+                    all_sprites.draw(screen)
+                    pygame.display.flip()
                     pygame.draw.rect(screen, (255, 255, 255), (190, 285, 380, 190))
                     screen.blit(img, (205, 355))
                     pygame.display.flip()
@@ -272,6 +276,61 @@ while running:
     all_sprites.update()
     all_sprites.draw(screen)
     pygame.display.flip()
+    if len(list(filter(lambda x: x.colour == 'w', all_sprites))) <= 3 and len(
+            list(filter(lambda x: x.colour == 'b', all_sprites))) <= 3:
+        if any(map(lambda x: type(x) is Pawn, all_sprites)):
+            have_pawn = True
+        else:
+            have_pawn = False
+        if not have_pawn:
+            if len(list(filter(lambda x: x.colour == 'w', all_sprites)))\
+                    == len(list(filter(lambda x: x.colour == 'b', all_sprites))) == 1:
+                draw = True
+            white_pieces = []
+            black_pieces = []
+            for piece in (filter(lambda x: x.colour == 'w', all_sprites)):
+                if type(piece) is not Bishop and type(piece) is not Knight and type(piece) is not King:
+                    white_pieces.clear()
+                    black_pieces.clear()
+                    break
+                elif type(piece) is Bishop:
+                    white_pieces.append('b')
+                elif type(piece) is King:
+                    white_pieces.append('k')
+                else:
+                    white_pieces.append('n')
+            for piece in (filter(lambda x: x.colour == 'b', all_sprites)):
+                if type(piece) is not Bishop and type(piece) is not Knight and type(piece) is not King:
+                    break
+                elif type(piece) is Bishop:
+                    black_pieces.append('b')
+                elif type(piece) is King:
+                    black_pieces.append('k')
+                else:
+                    black_pieces.append('n')
+            if len(white_pieces) == len(black_pieces) == 2:
+                draw = True
+            elif len(white_pieces) == 2 and 'b' not in black_pieces:
+                draw = True
+            elif len(black_pieces) == 2 and 'b' not in white_pieces:
+                draw = True
+            elif len(black_pieces) == len(white_pieces) == 3 and 'b' not in black_pieces and 'b' not in white_pieces:
+                draw = True
+            elif len(black_pieces) == 1 and 'b' not in white_pieces:
+                draw = True
+            elif len(white_pieces) == 1 and 'b' not in black_pieces:
+                draw = True
+        if draw:
+            while running:
+                pygame.display.flip()
+                font = pygame.font.SysFont(None, 90)
+                img = font.render('Draw', True, (0, 0, 0))
+                pygame.draw.rect(screen, (255, 255, 255), (190, 285, 380, 190))
+                screen.blit(img, (240, 355))
+                pygame.display.flip()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
